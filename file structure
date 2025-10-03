@@ -1,0 +1,43 @@
+📦 ClassroomResourceSystem
+ ┣ 📂 src
+ ┃ ┣ 📂 com.classroom
+ ┃ ┃ ┣ 📂 ui                 // All Swing forms (views)
+ ┃ ┃ ┃ ┣ MainDashboard.java
+ ┃ ┃ ┃ ┣ AdminLogin.java
+ ┃ ┃ ┃ ┣ LectureLogin.java
+ ┃ ┃ ┃ ┣ StudentLogin.java
+ ┃ ┃ ┃ ┣ AdminDashboard.java
+ ┃ ┃ ┃ ┣ LectureDashboard.java
+ ┃ ┃ ┃ ┣ StudentDashboard.java
+ ┃ ┃ ┣ 📂 model              // Data models (POJOs)
+ ┃ ┃ ┃ ┣ User.java
+ ┃ ┃ ┃ ┣ Resource.java
+ ┃ ┃ ┃ ┣ ClassEntity.java
+ ┃ ┃ ┃ ┣ Assignment.java
+ ┃ ┃ ┃ ┣ BackupLog.java
+ ┃ ┃ ┃ ┣ UserLog.java
+ ┃ ┃ ┣ 📂 dao                // Data Access Objects (DB interaction)
+ ┃ ┃ ┃ ┣ UserDAO.java
+ ┃ ┃ ┃ ┣ ResourceDAO.java
+ ┃ ┃ ┃ ┣ ClassDAO.java
+ ┃ ┃ ┃ ┣ AssignmentDAO.java
+ ┃ ┃ ┃ ┣ BackupLogDAO.java
+ ┃ ┃ ┃ ┣ UserLogDAO.java
+ ┃ ┃ ┣ 📂 controller         // Business logic between DAO ↔ UI
+ ┃ ┃ ┃ ┣ AuthController.java
+ ┃ ┃ ┃ ┣ ResourceController.java
+ ┃ ┃ ┃ ┣ ClassController.java
+ ┃ ┃ ┃ ┣ BackupController.java
+ ┃ ┃ ┣ 📂 util               // Utility/helper classes
+ ┃ ┃ ┃ ┣ DBConnection.java   // Oracle DB connection
+ ┃ ┃ ┃ ┣ FileUtils.java      // File handling (hashing, unique naming)
+ ┃ ┃ ┃ ┣ LANUtils.java       // LAN transfer helpers
+ ┃ ┃ ┃ ┣ Config.java         // App constants (DB URL, roles, etc.)
+ ┃ ┃ ┣ AppMain.java          // Entry point (launches MainDashboard)
+ ┣ 📂 resources              // Config files, icons, images
+ ┃ ┣ app.properties
+ ┃ ┣ logo.png
+ ┣ 📂 lib                    // External libraries (if needed, e.g., Oracle JDBC)
+ ┃ ┣ ojdbc8.jar
+ ┣ README.md
+ ┣ pom.xml (if using Maven)

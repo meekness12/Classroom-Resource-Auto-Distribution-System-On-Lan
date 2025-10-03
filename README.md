@@ -1,1 +1,1 @@
-# Classroom-Resource-Auto-Distribution-System-On-Lan
+# Classroom-Resource-Auto-Distribution-System
