@@ -47,7 +47,6 @@ public class StudentDashboard extends JFrame {
         // Tabs
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("My Resources", createMyResourcesPanel());
-        tabs.addTab("Announcements", createAnnouncementsPanel());
         tabs.addTab("Offline Cache", createOfflineCachePanel());
 
         add(header, BorderLayout.NORTH);
@@ -80,23 +79,6 @@ public class StudentDashboard extends JFrame {
         JPanel main = new JPanel(new BorderLayout());
         main.add(scroll, BorderLayout.CENTER);
         main.add(btnPanel, BorderLayout.SOUTH);
-
-        return createPanelWithPadding(main);
-    }
-
-    // Announcements tab with sample data
-    private JPanel createAnnouncementsPanel() {
-        String[] columns = {"Date", "Announcement"};
-        Object[][] data = {
-                {"2025-10-05", "Physics lab rescheduled to Friday."},
-                {"2025-10-04", "Submit Math homework by Monday."},
-                {"2025-10-03", "New Chemistry resources uploaded."}
-        };
-        JTable table = new JTable(new DefaultTableModel(data, columns));
-        JScrollPane scroll = new JScrollPane(table);
-
-        JPanel main = new JPanel(new BorderLayout());
-        main.add(scroll, BorderLayout.CENTER);
 
         return createPanelWithPadding(main);
     }
