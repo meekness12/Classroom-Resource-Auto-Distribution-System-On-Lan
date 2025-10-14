@@ -9,35 +9,47 @@ public class LectureDashboard extends JFrame {
     private final MainDashboard parent;
     private final String lectureId;
 
+    // Components for controller
+    private JButton btnUpload, btnRemove, btnAssign;
+    private JTable tblResources;
+    private JComboBox<String> cmbClass, cmbResource;
+    private JTabbedPane tabs;
+
     public LectureDashboard(MainDashboard parent, String lectureId) {
         this.parent = parent;
         this.lectureId = lectureId;
+
         setTitle("Lecture Dashboard - " + lectureId);
-        setSize(1100, 700);
+        setSize(1000, 650);
+        setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(parent);
+
         initUI();
     }
 
     private void initUI() {
         // Header
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(44, 62, 80));
+        header.setBackground(new Color(33, 150, 243));
+        header.setPreferredSize(new Dimension(1000, 70));
 
-        JLabel lblTitle = new JLabel("Lecture Dashboard");
+        JLabel lblTitle = new JLabel("📘 Lecture Dashboard");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblTitle.setForeground(Color.WHITE);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
+        lblTitle.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         header.add(lblTitle, BorderLayout.WEST);
 
         JLabel lblWelcome = new JLabel("Welcome, " + lectureId);
+        lblWelcome.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblWelcome.setForeground(Color.WHITE);
-        lblWelcome.setFont(new Font("Arial", Font.PLAIN, 16));
+        lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
         header.add(lblWelcome, BorderLayout.CENTER);
 
         JButton btnLogout = new JButton("Logout");
-        btnLogout.setBackground(new Color(192, 57, 43));
+        btnLogout.setBackground(new Color(244, 67, 54));
         btnLogout.setForeground(Color.WHITE);
         btnLogout.setFocusPainted(false);
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnLogout.addActionListener(e -> {
             this.dispose();
             parent.setVisible(true);
@@ -45,7 +57,8 @@ public class LectureDashboard extends JFrame {
         header.add(btnLogout, BorderLayout.EAST);
 
         // Tabs
-        JTabbedPane tabs = new JTabbedPane();
+        tabs = new JTabbedPane();
+        tabs.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         tabs.addTab("Upload Resource", createUploadPanel());
         tabs.addTab("My Resources", createMyResourcesPanel());
         tabs.addTab("Assign to Class", createAssignPanel());
@@ -56,78 +69,91 @@ public class LectureDashboard extends JFrame {
 
     // Upload Resource Tab
     private JPanel createUploadPanel() {
-        JButton btnChooseFile = new JButton("Choose File");
-        JButton btnUpload = new JButton("Upload");
+        JPanel main = new JPanel(new BorderLayout(10, 10));
+        main.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JPanel btnPanel = new JPanel();
+        JLabel lblInfo = new JLabel("<html>Select a file (PDF, MP4, or URL) and upload it.<br>Files will be visible in 'My Resources'.</html>");
+        lblInfo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblInfo.setHorizontalAlignment(SwingConstants.CENTER);
+        main.add(lblInfo, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        JButton btnChooseFile = new JButton("Choose File");
+        btnUpload = new JButton("Upload");
+        btnUpload.setBackground(new Color(76, 175, 80));
+        btnUpload.setForeground(Color.WHITE);
+        btnUpload.setFocusPainted(false);
         btnPanel.add(btnChooseFile);
         btnPanel.add(btnUpload);
 
-        JLabel lblInfo = new JLabel("<html>Select a file (PDF, MP4, or URL) and upload it.<br>Files will be visible in 'My Resources'.</html>");
-        lblInfo.setHorizontalAlignment(SwingConstants.CENTER);
-
-        JPanel main = new JPanel(new BorderLayout());
-        main.add(lblInfo, BorderLayout.CENTER);
         main.add(btnPanel, BorderLayout.SOUTH);
-
-        return createPanelWithPadding(main);
+        return main;
     }
 
-    // My Resources Tab with sample data
+    // My Resources Tab
     private JPanel createMyResourcesPanel() {
+        JPanel main = new JPanel(new BorderLayout(10, 10));
+        main.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
         String[] columns = {"Resource ID", "Title", "Type", "Uploaded On"};
         Object[][] data = {
                 {"R001", "Math Notes", "PDF", "2025-10-01"},
                 {"R002", "Physics Lecture", "MP4", "2025-10-03"},
                 {"R003", "Chemistry Link", "URL", "2025-10-05"}
         };
-        JTable table = new JTable(new DefaultTableModel(data, columns));
-        JScrollPane scroll = new JScrollPane(table);
+        tblResources = new JTable(new DefaultTableModel(data, columns));
+        tblResources.setFillsViewportHeight(true);
+        tblResources.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tblResources.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        JButton btnRemove = new JButton("Remove Resource");
-        JButton btnDownload = new JButton("Download Resource");
-
-        JPanel btnPanel = new JPanel();
-        btnPanel.add(btnDownload);
-        btnPanel.add(btnRemove);
-
-        JPanel main = new JPanel(new BorderLayout());
+        JScrollPane scroll = new JScrollPane(tblResources);
         main.add(scroll, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        btnRemove = new JButton("Remove Resource");
+        btnRemove.setBackground(new Color(244, 67, 54));
+        btnRemove.setForeground(Color.WHITE);
+        btnRemove.setFocusPainted(false);
+        btnPanel.add(btnRemove);
         main.add(btnPanel, BorderLayout.SOUTH);
 
-        return createPanelWithPadding(main);
+        return main;
     }
 
-    // Assign Resource to Class Tab with sample UI
+    // Assign Resource Tab
     private JPanel createAssignPanel() {
-        String[] classes = {"Class 1", "Class 2", "Class 3"};
-        JComboBox<String> classCombo = new JComboBox<>(classes);
+        JPanel main = new JPanel(new BorderLayout(10, 10));
+        main.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        String[] resources = {"Math Notes", "Physics Lecture", "Chemistry Link"};
-        JComboBox<String> resourceCombo = new JComboBox<>(resources);
-
-        JButton btnAssign = new JButton("Assign Resource");
-
-        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 15, 15));
         formPanel.add(new JLabel("Select Class:"));
-        formPanel.add(classCombo);
+        cmbClass = new JComboBox<>(new String[]{"Class 1", "Class 2", "Class 3"});
+        formPanel.add(cmbClass);
+
         formPanel.add(new JLabel("Select Resource:"));
-        formPanel.add(resourceCombo);
+        cmbResource = new JComboBox<>(new String[]{"Math Notes", "Physics Lecture", "Chemistry Link"});
+        formPanel.add(cmbResource);
+
+        btnAssign = new JButton("Assign Resource");
+        btnAssign.setBackground(new Color(76, 175, 80));
+        btnAssign.setForeground(Color.WHITE);
+        btnAssign.setFocusPainted(false);
+
         formPanel.add(new JLabel());
         formPanel.add(btnAssign);
 
-        JPanel main = new JPanel(new BorderLayout());
         main.add(new JLabel("Assign uploaded resources to a class:", SwingConstants.CENTER), BorderLayout.NORTH);
         main.add(formPanel, BorderLayout.CENTER);
 
-        return createPanelWithPadding(main);
+        return main;
     }
 
-    // Helper: add padding
-    private JPanel createPanelWithPadding(JComponent comp) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.add(comp, BorderLayout.CENTER);
-        return panel;
-    }
+    // Getters for controller
+    public JButton getBtnUpload() { return btnUpload; }
+    public JButton getBtnRemove() { return btnRemove; }
+    public JButton getBtnAssign() { return btnAssign; }
+    public JTable getResourcesTable() { return tblResources; }
+    public JComboBox<String> getClassCombo() { return cmbClass; }
+    public JComboBox<String> getResourceCombo() { return cmbResource; }
+    public JTabbedPane getTabs() { return tabs; }
 }
