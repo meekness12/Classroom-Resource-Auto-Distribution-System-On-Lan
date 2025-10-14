@@ -2,87 +2,167 @@ package com.classroom.ui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 
 public class MainDashboard extends JFrame {
 
-    private JPanel headerPanel, contentPanel;
+    private String selectedLAN;
 
     public MainDashboard() {
-        setTitle("Classroom Resource Auto-Distribution System");
-        setSize(1000, 600);
+        setTitle("Classroom Resource Distribution System");
+        setSize(500, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); // center window
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
+        setResizable(false);
 
-        // Header
-        headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(44, 62, 80));
-        JLabel title = new JLabel("Classroom Resource Auto-Distribution System");
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Arial", Font.BOLD, 20));
-        headerPanel.add(title);
+        // Detect active LAN automatically
+        detectLAN();
 
-        // Content Area (main workspace)
-        contentPanel = new JPanel();
-        contentPanel.setLayout(new GridBagLayout()); // center alignment
-        contentPanel.setBackground(Color.WHITE);
+        // Initialize the main dashboard UI
+        initUI();
+    }
 
-        // Buttons for roles
-        JButton btnAdmin = new JButton("Admin");
-        JButton btnLecture = new JButton("Lecture");
-        JButton btnStudent = new JButton("Student");
+    /**
+     * Auto-detect active LAN and allow user to confirm/change.
+     */
+    private void detectLAN() {
+        String detectedLAN = null;
+        try {
+            Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+            ArrayList<String> lanList = new ArrayList<>();
+            for (NetworkInterface netIf : Collections.list(nets)) {
+                if (!netIf.isLoopback() && netIf.isUp()) {
+                    Enumeration<InetAddress> addresses = netIf.getInetAddresses();
+                    for (InetAddress addr : Collections.list(addresses)) {
+                        if (!addr.isLoopbackAddress() && addr.getHostAddress().contains(".")) {
+                            detectedLAN = netIf.getName() + " - " + netIf.getDisplayName() + " (" + addr.getHostAddress() + ")";
+                            lanList.add(detectedLAN);
+                        }
+                    }
+                }
+            }
 
-        btnAdmin.setFont(new Font("Arial", Font.BOLD, 16));
-        btnLecture.setFont(new Font("Arial", Font.BOLD, 16));
-        btnStudent.setFont(new Font("Arial", Font.BOLD, 16));
+            // Show input dialog with detected LAN prefilled
+            String input = (String) JOptionPane.showInputDialog(
+                    null,
+                    "Confirm or select the LAN you are connected to:",
+                    "LAN Selection",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    lanList.toArray(),
+                    detectedLAN
+            );
 
-        btnAdmin.setPreferredSize(new Dimension(180, 40));
-        btnLecture.setPreferredSize(new Dimension(180, 40));
-        btnStudent.setPreferredSize(new Dimension(180, 40));
+            if (input == null || input.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "LAN selection is required. Exiting.");
+                System.exit(0);
+            }
 
-        // Positioning with GridBag
+            selectedLAN = input;
+
+        } catch (Exception e) {
+            // Fallback: manual input if detection fails
+            selectedLAN = JOptionPane.showInputDialog("Enter LAN IP manually:");
+            if (selectedLAN == null || selectedLAN.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "LAN selection required. Exiting.");
+                System.exit(0);
+            }
+        }
+    }
+
+    private void initUI() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(245, 245, 245));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 0, 10, 0);
+        gbc.insets = new Insets(15, 15, 15, 15);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Title
+        JLabel lblTitle = new JLabel("Classroom Resource System");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        lblTitle.setForeground(new Color(33, 37, 41));
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        panel.add(lblTitle, gbc);
 
-        JLabel roleLabel = new JLabel("📚 Select Your Role");
-        roleLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-        contentPanel.add(roleLabel, gbc);
-
+        // LAN info
+        JLabel lblLAN = new JLabel("Connected LAN: " + selectedLAN, SwingConstants.CENTER);
+        lblLAN.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblLAN.setForeground(new Color(55, 71, 79));
         gbc.gridy++;
-        contentPanel.add(btnAdmin, gbc);
+        panel.add(lblLAN, gbc);
 
+        // Welcome message
+        JLabel lblWelcome = new JLabel("<html><center>Hey, welcome to our Classroom Auto Distribution!<br>"
+                + "Please choose your role to continue.</center></html>", SwingConstants.CENTER);
+        lblWelcome.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblWelcome.setForeground(new Color(55, 71, 79));
         gbc.gridy++;
-        contentPanel.add(btnLecture, gbc);
+        panel.add(lblWelcome, gbc);
 
+        // Buttons with modern look
+        JButton btnAdmin = createStyledButton("Admin", new Color(33, 150, 243));
+        JButton btnLecture = createStyledButton("Lecture", new Color(0, 123, 255));
+        JButton btnStudent = createStyledButton("Student", new Color(40, 167, 69));
+
+        gbc.gridwidth = 1;
         gbc.gridy++;
-        contentPanel.add(btnStudent, gbc);
+        panel.add(btnAdmin, gbc);
+        gbc.gridy++;
+        panel.add(btnLecture, gbc);
+        gbc.gridy++;
+        panel.add(btnStudent, gbc);
 
-        // Add panels to frame
-        add(headerPanel, BorderLayout.NORTH);
-        add(contentPanel, BorderLayout.CENTER);
+        add(panel);
 
-        // Actions: Open Login Windows
+        // Action Listeners
         btnAdmin.addActionListener(e -> {
-            new AdminDashboard(this, "Admin01").setVisible(true); // Pass this as parent
-            dispose(); // close dashboard after opening login
+            this.setVisible(false);
+            new AdminLogin(this).setVisible(true);
         });
 
         btnLecture.addActionListener(e -> {
+            this.setVisible(false);
             new LectureLogin(this).setVisible(true);
-            dispose();
         });
 
         btnStudent.addActionListener(e -> {
+            this.setVisible(false);
             new StudentLogin(this).setVisible(true);
-            dispose();
         });
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new MainDashboard().setVisible(true);
+    private JButton createStyledButton(String text, Color color) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(color.darker());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(color);
+            }
         });
+        return button;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MainDashboard().setVisible(true));
     }
 }
