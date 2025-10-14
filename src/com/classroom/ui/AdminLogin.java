@@ -1,11 +1,9 @@
-package classroom.ui;
+package com.classroom.ui;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Simple Admin login window (mock authentication).
- */
+
 public class AdminLogin extends JFrame {
     private final MainDashboard parent;
 

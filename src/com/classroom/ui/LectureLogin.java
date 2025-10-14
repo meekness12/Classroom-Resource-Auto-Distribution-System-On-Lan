@@ -1,4 +1,4 @@
-package classroom.ui;
+package com.classroom.ui;
 
 import javax.swing.*;
 import java.awt.*;
