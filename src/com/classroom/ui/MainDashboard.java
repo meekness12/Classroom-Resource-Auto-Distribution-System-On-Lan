@@ -1,4 +1,4 @@
-package classroom.ui;
+package com.classroom.ui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,17 +65,17 @@ public class MainDashboard extends JFrame {
 
         // Actions: Open Login Windows
         btnAdmin.addActionListener(e -> {
-            new AdminLogin(null).setVisible(true);
+            new AdminDashboard(this, "Admin01").setVisible(true); // Pass this as parent
             dispose(); // close dashboard after opening login
         });
 
         btnLecture.addActionListener(e -> {
-            new LectureLogin(null).setVisible(true);
+            new LectureLogin(this).setVisible(true);
             dispose();
         });
 
         btnStudent.addActionListener(e -> {
-            new StudentLogin(null).setVisible(true);
+            new StudentLogin(this).setVisible(true);
             dispose();
         });
     }
