@@ -1,6 +1,6 @@
 package com.classroom.dao;
 
-import com.classroom.util.DBConnection;
+import com.classroom.util.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ public class ResourceDAO {
     public List<String> getAllResources() {
         List<String> resources = new ArrayList<>();
         String sql = "SELECT resource_id, title, type FROM resources";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -26,7 +26,7 @@ public class ResourceDAO {
 
     public boolean addResource(String title, String type, String filePath, int uploadedBy) {
         String sql = "INSERT INTO resources (title, type, file_path, uploaded_by) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, title);
             ps.setString(2, type);
