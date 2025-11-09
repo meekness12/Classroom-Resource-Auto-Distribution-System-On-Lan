@@ -10,14 +10,19 @@ public class UserDAO {
     // Fetch all users
     public List<String> getAllUsers() {
         List<String> users = new ArrayList<>();
-        String sql = "SELECT user_id, username, full_name, role FROM users";
+        String sql = "SELECT user_id, username, full_name, role FROM users ORDER BY user_id ASC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                users.add(rs.getInt("user_id") + " - " + rs.getString("username") + " (" + rs.getString("role") + ")");
+                int id = rs.getInt("user_id");
+                String username = rs.getString("username");
+                String fullName = rs.getString("full_name");
+                String role = rs.getString("role");
+
+                users.add(id + " - " + username + " - " + fullName + " (" + role + ")");
             }
 
         } catch (SQLException e) {
@@ -67,6 +72,29 @@ public class UserDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    // Fetch all students
+    public List<String[]> getAllStudents() {
+        List<String[]> students = new ArrayList<>();
+        String sql = "SELECT user_id, username, full_name FROM users WHERE role='STUDENT'";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String[] student = new String[3];
+                student[0] = String.valueOf(rs.getInt("user_id"));
+                student[1] = rs.getString("username");
+                student[2] = rs.getString("full_name");
+                students.add(student);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return students;
     }
 
     // Fetch user by ID
@@ -123,5 +151,48 @@ public class UserDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    // Get lecturer ID by username
+    public int getLecturerIdByUsername(String username) {
+        String sql = "SELECT user_id FROM users WHERE username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("user_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    // ------------------ NEW METHOD ------------------
+    // Get student class by username
+    public String getStudentClass(String username) {
+        String sql = "SELECT c.class_name " +
+                     "FROM student_classes sc " +
+                     "JOIN classes c ON sc.class_id = c.class_id " +
+                     "JOIN users u ON sc.student_id = u.user_id " +
+                     "WHERE u.username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("class_name");
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error fetching student class:");
+            e.printStackTrace();
+        }
+        return null;
     }
 }
