@@ -5,18 +5,15 @@ import com.classroom.dao.UserDAO;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Student login window connected to DB.
- */
 public class StudentLogin extends JFrame {
     private final MainDashboard parent;
     private final UserDAO userDAO;
 
     public StudentLogin(MainDashboard parent) {
         this.parent = parent;
-        this.userDAO = new UserDAO(); // DAO to interact with DB
+        this.userDAO = new UserDAO();
         setTitle("Student Login");
-        setSize(420, 300); // increased height for new button
+        setSize(420, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(parent);
         initUI();
@@ -34,7 +31,7 @@ public class StudentLogin extends JFrame {
         JPasswordField txtPass = new JPasswordField(16);
         JButton btnLogin = new JButton("Login");
         JButton btnCancel = new JButton("Cancel");
-        JButton btnRegister = new JButton("Register"); // new button
+        JButton btnRegister = new JButton("Register");
 
         gbc.gridx = 0; gbc.gridy = 0; p.add(lblId, gbc);
         gbc.gridx = 1; p.add(txtId, gbc);
@@ -46,12 +43,12 @@ public class StudentLogin extends JFrame {
         btnPanel.setBackground(Color.WHITE);
         btnPanel.add(btnLogin);
         btnPanel.add(btnCancel);
-        btnPanel.add(btnRegister); // add register button
+        btnPanel.add(btnRegister);
         p.add(btnPanel, gbc);
 
         add(p);
 
-        // Login button action
+        // Login action
         btnLogin.addActionListener(e -> {
             String username = txtId.getText().trim();
             String password = new String(txtPass.getPassword()).trim();
@@ -61,29 +58,30 @@ public class StudentLogin extends JFrame {
                 return;
             }
 
-            // Hash password same as registration
             String passwordHash = Integer.toString(password.hashCode());
-
             boolean valid = userDAO.validateLogin(username, passwordHash);
 
             if (valid) {
                 JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                // Open student dashboard
-                StudentDashboard dash = new StudentDashboard(parent, username);
+
+                // Get student class
+                String studentClass = userDAO.getStudentClass(username); // new method in UserDAO
+                StudentDashboard dash = new StudentDashboard(parent, username, studentClass);
                 dash.setVisible(true);
                 this.dispose();
+
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid username or password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        // Cancel button action
+        // Cancel action
         btnCancel.addActionListener(e -> {
             this.dispose();
             parent.setVisible(true);
         });
 
-        // Register button action
+        // Register action
         btnRegister.addActionListener(e -> {
             this.dispose();
             new StudentRegister(parent).setVisible(true);
