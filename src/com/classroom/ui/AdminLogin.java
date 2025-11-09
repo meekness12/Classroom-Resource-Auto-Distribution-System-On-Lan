@@ -1,14 +1,20 @@
 package com.classroom.ui;
 
+import com.classroom.dao.UserDAO;
+
 import javax.swing.*;
 import java.awt.*;
 
-
+/**
+ * Admin login window using UserDAO.
+ */
 public class AdminLogin extends JFrame {
     private final MainDashboard parent;
+    private final UserDAO userDAO;
 
     public AdminLogin(MainDashboard parent) {
         this.parent = parent;
+        this.userDAO = new UserDAO(); // DAO to interact with DB
         setTitle("Admin Login");
         setSize(420, 260);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -43,21 +49,27 @@ public class AdminLogin extends JFrame {
 
         add(p);
 
+        // Login action
         btnLogin.addActionListener(e -> {
-            // Mock authentication: any non-empty username/password allowed
-            String user = txtUser.getText().trim();
-            String pass = new String(txtPass.getPassword()).trim();
+            String username = txtUser.getText().trim();
+            String password = new String(txtPass.getPassword()).trim();
 
-            if (user.isEmpty() || pass.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter username and password.", "Login Failed", JOptionPane.WARNING_MESSAGE);
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Enter username and password.", "Login Failed", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // TODO: replace with real auth (DAO)
-            // Open AdminDashboard
-            AdminDashboard dash = new AdminDashboard(parent, user);
-            dash.setVisible(true);
-            this.dispose();
+            // Admin passwords in DB are plain text
+            boolean valid = userDAO.validateLogin(username, password);
+
+            if (valid) {
+                JOptionPane.showMessageDialog(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                AdminDashboard dash = new AdminDashboard(parent, username);
+                dash.setVisible(true);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid username or password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         btnCancel.addActionListener(e -> {
