@@ -26,7 +26,7 @@ public class StudentClient {
 
     private void connectToServer() {
         try {
-            socket = new Socket("localhost", 5000);
+            socket = new Socket("192.168.160.105", 5000);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 

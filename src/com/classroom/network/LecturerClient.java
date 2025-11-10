@@ -5,7 +5,7 @@ import java.net.Socket;
 
 public class LecturerClient {
 
-    private static final String SERVER_IP = "localhost";
+    private static final String SERVER_IP = "192.168.160.105";
     private static final int SERVER_PORT = 5000;
 
     /**
