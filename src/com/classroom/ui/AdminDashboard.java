@@ -215,7 +215,8 @@ public class AdminDashboard extends JFrame {
         }
 
         if (JOptionPane.showConfirmDialog(this, "Delete user: " + usernameToDelete + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            if (userDAO.deleteUser(usernameToDelete)) {
+            String id = (String) userTable.getValueAt(row, 0);
+            if (userDAO.deleteUser(Integer.parseInt(id))) {
                 JOptionPane.showMessageDialog(this, "User deleted successfully!");
                 loadUsers();
             } else {
