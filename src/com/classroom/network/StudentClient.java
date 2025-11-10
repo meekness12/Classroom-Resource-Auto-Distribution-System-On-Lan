@@ -5,6 +5,7 @@ import com.classroom.ui.StudentDashboard;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.io.*;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Vector;
 
@@ -26,12 +27,16 @@ public class StudentClient {
 
     private void connectToServer() {
         try {
-            socket = new Socket("localhost", 5000);
+            // Use LAN IP or localhost dynamically
+            String serverIP = "192.168.160.105"; // change to your server IP
+            int serverPort = 5000;
+
+            socket = new Socket(InetAddress.getByName(serverIP), serverPort);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-            // Send join info
-            out.writeUTF("STUDENT_JOIN");
+            // Send correct role
+            out.writeUTF("STUDENT"); 
             out.writeUTF(studentClass);
 
             System.out.println("🎓 Connected to Resource Server. Waiting for files...");
@@ -41,7 +46,7 @@ public class StudentClient {
 
         } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(dashboard, "Failed to connect to resource server.");
+            JOptionPane.showMessageDialog(dashboard, "Failed to connect to resource server.\nCheck server IP, port, and firewall.");
         }
     }
 
@@ -76,6 +81,7 @@ public class StudentClient {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(dashboard, "Connection lost. Resource server may be offline.");
         }
     }
 

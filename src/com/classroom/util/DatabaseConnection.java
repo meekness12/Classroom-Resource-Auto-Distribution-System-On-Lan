@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     // LAN MySQL server configuration
-    private static final String URL = "jdbc:mysql://192.168.100.150:3306/classroom_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false";
+    private static final String URL = "jdbc:mysql://192.168.160.105:3306/classroom_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false";
     private static final String USER = "lanuser";
     private static final String PASSWORD = "Java@123";
 
