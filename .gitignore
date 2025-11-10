@@ -2,11 +2,11 @@
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-/cache_files
-/received_files
-/server_files
-/.idea
 
+/cache_files
+/server_files
+/received_files
+/server_files/Windows server administrator
 
 ### Eclipse ###
 .apt_generated

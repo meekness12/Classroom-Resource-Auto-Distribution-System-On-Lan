@@ -3,6 +3,8 @@ package com.classroom.ui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.Socket;
 import java.util.Vector;
@@ -14,11 +16,12 @@ public class StudentDashboard extends JFrame {
     private final String studentClass;
 
     private JTable tblResources;
+    private JTable tblCached;
     private JButton btnDownload, btnCache;
     private JTabbedPane tabs;
 
     // Networking
-    private static final String SERVER_IP = "localhost";
+    private static final String SERVER_IP = "localhost"; // replace with your server IP if on LAN
     private static final int SERVER_PORT = 5000;
     private Socket socket;
     private DataInputStream in;
@@ -35,7 +38,8 @@ public class StudentDashboard extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         initUI();
-        connectToServer();
+        loadCachedFiles(); // load cached files first
+        connectToServer(); // then connect to server for live resources
     }
 
     private void initUI() {
@@ -63,22 +67,38 @@ public class StudentDashboard extends JFrame {
         tabs = new JTabbedPane();
         tabs.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         tabs.addTab("My Resources", createResourcesTab());
-        tabs.addTab("Offline Cache", createPlaceholderPanel("Cached files & status"));
+        tabs.addTab("Offline Cache", createCacheTab());
 
         add(header, BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
     }
 
+    // === RESOURCES TAB ===
     private JPanel createResourcesTab() {
         JPanel main = new JPanel(new BorderLayout(10, 10));
         main.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        String[] columns = {"Resource ID", "Title", "Type", "File Path"};
+        String[] columns = {"#", "Title", "Type", "Path"};
         DefaultTableModel model = new DefaultTableModel(columns, 0);
         tblResources = new JTable(model);
         tblResources.setFillsViewportHeight(true);
         tblResources.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         tblResources.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tblResources.setRowHeight(28);
+
+        // Double-click to open downloaded file
+        tblResources.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    int row = tblResources.getSelectedRow();
+                    if (row != -1) {
+                        String filePath = tblResources.getValueAt(row, 3).toString();
+                        openFile(filePath);
+                    }
+                }
+            }
+        });
 
         JScrollPane scroll = new JScrollPane(tblResources);
         main.add(scroll, BorderLayout.CENTER);
@@ -94,7 +114,6 @@ public class StudentDashboard extends JFrame {
         btnCache.setBackground(new Color(255, 193, 7));
         btnCache.setForeground(Color.BLACK);
         btnCache.setFocusPainted(false);
-
         btnCache.addActionListener(e -> cacheAllFiles());
 
         btnPanel.add(btnDownload);
@@ -104,12 +123,36 @@ public class StudentDashboard extends JFrame {
         return main;
     }
 
-    private JPanel createPlaceholderPanel(String text) {
-        JPanel p = new JPanel(new BorderLayout());
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        p.add(lbl, BorderLayout.CENTER);
-        return p;
+    // === CACHE TAB ===
+    private JPanel createCacheTab() {
+        JPanel cachePanel = new JPanel(new BorderLayout(10, 10));
+        cachePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        String[] columns = {"#", "File Name", "Type", "Location"};
+        DefaultTableModel cacheModel = new DefaultTableModel(columns, 0);
+        tblCached = new JTable(cacheModel);
+        tblCached.setFillsViewportHeight(true);
+        tblCached.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tblCached.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tblCached.setRowHeight(28);
+
+        // Double-click to open cached file
+        tblCached.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    int row = tblCached.getSelectedRow();
+                    if (row != -1) {
+                        String filePath = tblCached.getValueAt(row, 3).toString();
+                        openFile(filePath);
+                    }
+                }
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(tblCached);
+        cachePanel.add(scroll, BorderLayout.CENTER);
+        return cachePanel;
     }
 
     private void connectToServer() {
@@ -133,7 +176,11 @@ public class StudentDashboard extends JFrame {
     }
 
     private void disconnectFromServer() {
-        try { if (socket != null) socket.close(); } catch (IOException e) { e.printStackTrace(); }
+        try {
+            if (socket != null) socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void listenForResources() {
@@ -144,7 +191,7 @@ public class StudentDashboard extends JFrame {
                     String fileName = in.readUTF();
                     long fileSize = in.readLong();
 
-                    File saveDir = new File("received_files");
+                    File saveDir = new File("received_files/" + studentClass);
                     if (!saveDir.exists()) saveDir.mkdirs();
 
                     File outputFile = new File(saveDir, fileName);
@@ -172,7 +219,7 @@ public class StudentDashboard extends JFrame {
         Vector<String> row = new Vector<>();
         row.add(String.valueOf(model.getRowCount() + 1));
         row.add(title);
-        row.add(title.endsWith(".pdf") ? "PDF" : title.endsWith(".mp4") ? "MP4" : "URL");
+        row.add(title.endsWith(".pdf") ? "PDF" : title.endsWith(".mp4") ? "MP4" : "FILE");
         row.add(path);
         model.addRow(row);
     }
@@ -183,12 +230,13 @@ public class StudentDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "No files to cache.");
             return;
         }
+
+        File cacheDir = new File("cache_files/" + studentClass);
+        if (!cacheDir.exists()) cacheDir.mkdirs();
+
         for (int i = 0; i < rows; i++) {
             String filePath = (String) tblResources.getValueAt(i, 3);
             File src = new File(filePath);
-            File cacheDir = new File("cache_files");
-            if (!cacheDir.exists()) cacheDir.mkdirs();
-
             File dest = new File(cacheDir, src.getName());
             try (FileInputStream fis = new FileInputStream(src);
                  FileOutputStream fos = new FileOutputStream(dest)) {
@@ -201,10 +249,72 @@ public class StudentDashboard extends JFrame {
                 e.printStackTrace();
             }
         }
-        JOptionPane.showMessageDialog(this, "All resources cached offline!");
+
+        JOptionPane.showMessageDialog(this, "✅ All resources cached offline!");
+        loadCachedFiles(); // refresh cache tab
     }
 
-    // Getters for controller
+    private void loadCachedFiles() {
+        File cacheDir = new File("cache_files/" + studentClass);
+        if (!cacheDir.exists()) return;
+
+        File[] files = cacheDir.listFiles();
+        if (files == null || files.length == 0) return;
+
+        DefaultTableModel model = (DefaultTableModel) tblCached.getModel();
+        model.setRowCount(0);
+
+        int count = 1;
+        for (File file : files) {
+            if (file.isFile()) {
+                Vector<String> row = new Vector<>();
+                row.add(String.valueOf(count++));
+                row.add(file.getName());
+                row.add(file.getName().endsWith(".pdf") ? "PDF" :
+                        file.getName().endsWith(".mp4") ? "MP4" : "FILE");
+                row.add(file.getAbsolutePath());
+                model.addRow(row);
+            }
+        }
+        System.out.println("📦 Loaded " + (count - 1) + " cached files for " + studentClass);
+    }
+
+    // ✅ Robust file opener for Windows, Mac, Linux
+    private void openFile(String path) {
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                JOptionPane.showMessageDialog(this, "File not found:\n" + path, "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().open(file);
+                    return;
+                } catch (IOException e) {
+                    System.out.println("Desktop.open failed, falling back to OS commands");
+                }
+            }
+
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "\"\"", "\"" + file.getAbsolutePath() + "\""});
+            } else if (os.contains("mac")) {
+                Runtime.getRuntime().exec(new String[]{"open", file.getAbsolutePath()});
+            } else if (os.contains("nix") || os.contains("nux")) {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", file.getAbsolutePath()});
+            } else {
+                JOptionPane.showMessageDialog(this, "Cannot open file on this OS.");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error opening file:\n" + e.getMessage());
+        }
+    }
+
+    // Getters
     public JTable getResourcesTable() { return tblResources; }
     public JButton getBtnDownload() { return btnDownload; }
     public JButton getBtnCache() { return btnCache; }
