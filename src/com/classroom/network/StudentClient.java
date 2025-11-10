@@ -21,32 +21,39 @@ public class StudentClient {
     public StudentClient(StudentDashboard dashboard, String studentClass) {
         this.dashboard = dashboard;
         this.studentClass = studentClass;
-
         connectToServer();
+
+        // 🟢 Load cached resources AFTER dashboard is fully visible
+        SwingUtilities.invokeLater(this::loadCachedResources);
     }
 
     private void connectToServer() {
         try {
-            // Use LAN IP or localhost dynamically
-            String serverIP = "192.168.160.105"; // change to your server IP
+            String serverIP = "192.168.160.105"; // ✅ change to your LAN server IP
             int serverPort = 5000;
 
             socket = new Socket(InetAddress.getByName(serverIP), serverPort);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-            // Send correct role
-            out.writeUTF("STUDENT"); 
+            // Identify as student
+            out.writeUTF("STUDENT");
             out.writeUTF(studentClass);
+            out.flush();
 
             System.out.println("🎓 Connected to Resource Server. Waiting for files...");
 
-            // Start listening thread
+            // Start listener thread
             new Thread(this::listenForResources).start();
 
         } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(dashboard, "Failed to connect to resource server.\nCheck server IP, port, and firewall.");
+            JOptionPane.showMessageDialog(
+                    dashboard,
+                    "❌ Failed to connect to resource server.\nCheck IP, port, or firewall.",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
@@ -54,15 +61,16 @@ public class StudentClient {
         try {
             while (true) {
                 String message = in.readUTF();
-                if ("NEW_FILE".equals(message)) {
+                if ("NEW_FILE".equalsIgnoreCase(message)) {
                     String fileName = in.readUTF();
                     long fileSize = in.readLong();
 
-                    File saveDir = new File("received_files");
-                    if (!saveDir.exists()) saveDir.mkdirs();
+                    // Save to local folder by class
+                    File classDir = new File("received_files/" + studentClass);
+                    if (!classDir.exists()) classDir.mkdirs();
 
-                    File outputFile = new File(saveDir, fileName);
-                    try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                    File outFile = new File(classDir, fileName);
+                    try (FileOutputStream fos = new FileOutputStream(outFile)) {
                         byte[] buffer = new byte[4096];
                         long totalRead = 0;
                         int bytesRead;
@@ -72,34 +80,63 @@ public class StudentClient {
                         }
                     }
 
-                    System.out.println("✅ Received file: " + fileName);
+                    System.out.println("✅ Received: " + fileName);
 
-                    // Update GUI table safely on EDT
                     SwingUtilities.invokeLater(() ->
-                            addResourceToTable(fileName, outputFile.getAbsolutePath()));
+                            addResourceToTable(fileName, outFile.getAbsolutePath()));
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(dashboard, "Connection lost. Resource server may be offline.");
+            System.err.println("⚠️ Disconnected from Resource Server.");
         }
+    }
+
+    /**
+     * Load cached files stored locally in received_files/className/
+     */
+    private void loadCachedResources() {
+        File classDir = new File("received_files/" + studentClass);
+        if (!classDir.exists()) {
+            System.out.println("📁 No folder found for: " + studentClass);
+            return;
+        }
+
+        File[] files = classDir.listFiles();
+        if (files == null || files.length == 0) {
+            System.out.println("📁 No cached files found for: " + studentClass);
+            return;
+        }
+
+        System.out.println("📂 Loading cached files for " + studentClass + "...");
+        for (File file : files) {
+            if (file.isFile()) {
+                addResourceToTable(file.getName(), file.getAbsolutePath());
+            }
+        }
+        System.out.println("✅ Loaded " + files.length + " cached resources for " + studentClass);
     }
 
     private void addResourceToTable(String title, String path) {
         DefaultTableModel model = (DefaultTableModel) dashboard.getResourcesTable().getModel();
+
+        // Avoid duplicate rows
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (model.getValueAt(i, 1).equals(title)) return;
+        }
+
         Vector<String> row = new Vector<>();
-        row.add(String.valueOf(model.getRowCount() + 1)); // Resource ID
+        row.add(String.valueOf(model.getRowCount() + 1)); // ID
         row.add(title);
-        row.add(title.endsWith(".pdf") ? "PDF" : title.endsWith(".mp4") ? "MP4" : "URL");
+        row.add(title.endsWith(".pdf") ? "PDF" :
+                title.endsWith(".mp4") ? "MP4" :
+                title.endsWith(".docx") ? "DOCX" : "FILE");
         row.add(path);
         model.addRow(row);
     }
 
     public void disconnect() {
         try {
-            if (socket != null) socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            if (socket != null && !socket.isClosed()) socket.close();
+        } catch (IOException ignored) {}
     }
 }
