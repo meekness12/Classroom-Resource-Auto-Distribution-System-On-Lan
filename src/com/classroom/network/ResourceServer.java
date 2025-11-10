@@ -4,22 +4,27 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ResourceServer {
 
     private static final int SERVER_PORT = 5000;
 
-    // Maps className -> list of student sockets
+    // Maps className -> list of connected students
     private static final Map<String, List<StudentHandler>> classStudents = new HashMap<>();
 
     public static void main(String[] args) {
-        System.out.println("🎓 Resource Server starting...");
+        System.out.println("🎓 Resource Server starting on port " + SERVER_PORT + "...");
         try (ServerSocket serverSocket = new ServerSocket(SERVER_PORT)) {
 
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("New connection: " + socket.getRemoteSocketAddress());
-                new Thread(() -> handleClient(socket)).start();
+                new Thread(new Runnable() {
+                    public void run() {
+                        handleClient(socket);
+                    }
+                }).start();
             }
 
         } catch (IOException e) {
@@ -28,22 +33,37 @@ public class ResourceServer {
     }
 
     private static void handleClient(Socket socket) {
-        try (DataInputStream in = new DataInputStream(socket.getInputStream());
-             DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
+        try {
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-            String role = in.readUTF();
+            String role = in.readUTF().trim().toUpperCase();
 
             switch (role) {
-                case "STUDENT_JOIN" -> {
+
+                case "STUDENT":
+                case "STUDENT_JOIN": {
                     String className = in.readUTF();
                     StudentHandler handler = new StudentHandler(socket, in, out, className);
                     synchronized (classStudents) {
-                        classStudents.computeIfAbsent(className, k -> new ArrayList<>()).add(handler);
+                        classStudents.computeIfAbsent(className, k -> new CopyOnWriteArrayList<>()).add(handler);
                     }
                     System.out.println("🎓 Student joined class: " + className);
+
+                    // Keep the connection alive
+                    while (!socket.isClosed()) {
+                        try {
+                            Thread.sleep(5000); // simple heartbeat
+                        } catch (InterruptedException ignored) { }
+                    }
+
+                    removeStudent(handler);
+                    break;
                 }
 
-                case "LECTURER" -> {
+                case "LECTURE":
+                case "LECTURER":
+                case "LECTURER_SEND": {
                     String lecturerId = in.readUTF();
                     String className = in.readUTF();
                     String fileName = in.readUTF();
@@ -67,9 +87,11 @@ public class ResourceServer {
 
                     // Broadcast to all students in the class
                     broadcastToClass(className, tempFile);
+                    break;
                 }
 
-                default -> System.out.println("Unknown role: " + role);
+                default:
+                    System.out.println("⚠️ Unknown role: " + role + " from " + socket.getRemoteSocketAddress());
             }
 
         } catch (IOException e) {
@@ -83,25 +105,44 @@ public class ResourceServer {
             students = classStudents.getOrDefault(className, Collections.emptyList());
         }
 
-        for (StudentHandler s : students) {
-            try {
-                DataOutputStream out = s.getOut();
-                out.writeUTF("NEW_FILE");
-                out.writeUTF(file.getName());
-                out.writeLong(file.length());
+        for (final StudentHandler s : students) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        DataOutputStream out = s.getOut();
+                        out.writeUTF("NEW_FILE");
+                        out.writeUTF(file.getName());
+                        out.writeLong(file.length());
 
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    byte[] buffer = new byte[4096];
-                    int read;
-                    while ((read = fis.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
+                        try (FileInputStream fis = new FileInputStream(file)) {
+                            byte[] buffer = new byte[4096];
+                            int read;
+                            while ((read = fis.read(buffer)) != -1) {
+                                out.write(buffer, 0, read);
+                            }
+                        }
+                        out.flush();
+                        System.out.println("✅ Sent " + file.getName() + " to student " + s.socket.getRemoteSocketAddress());
+
+                    } catch (IOException e) {
+                        System.err.println("❌ Failed to send file to student " + s.socket.getRemoteSocketAddress());
+                        removeStudent(s);
                     }
                 }
-                out.flush();
-                System.out.println("✅ Sent " + file.getName() + " to student " + s.socket.getRemoteSocketAddress());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            }).start();
+        }
+    }
+
+    private static void removeStudent(StudentHandler student) {
+        synchronized (classStudents) {
+            List<StudentHandler> list = classStudents.get(student.className);
+            if (list != null) list.remove(student);
+        }
+        try {
+            if (!student.socket.isClosed()) student.socket.close();
+            System.out.println("🗑️ Removed student from class " + student.className);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
