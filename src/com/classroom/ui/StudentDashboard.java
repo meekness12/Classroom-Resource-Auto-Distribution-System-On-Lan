@@ -21,7 +21,7 @@ public class StudentDashboard extends JFrame {
     private JTabbedPane tabs;
 
     // Networking
-    private static final String SERVER_IP = "192.168.102.105"; // replace with your server IP if on LAN
+    private static final String SERVER_IP = "192.168.102.105"; 
     private static final int SERVER_PORT = 5000;
     private Socket socket;
     private DataInputStream in;
