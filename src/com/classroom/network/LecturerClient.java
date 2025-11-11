@@ -5,7 +5,7 @@ import java.net.Socket;
 
 public class LecturerClient {
 
-    private static final String SERVER_IP = "192.168.160.105"; // Change to your server LAN IP
+    private static final String SERVER_IP = "192.168.102.105"; // Change to your server LAN IP
     private static final int SERVER_PORT = 5000;
 
     /**

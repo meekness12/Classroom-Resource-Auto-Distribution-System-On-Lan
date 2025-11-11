@@ -2,18 +2,13 @@
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-/cache_files
 /received_files
 /server_files
-/.idea
-
+/cache_files
 
 ### Eclipse ###
 .apt_generated
 .classpath
-.factorypath
-.project
-.settings
 .springBeans
 .sts4-cache
 bin/
