@@ -3,20 +3,22 @@ package com.classroom.ui;
 import com.classroom.dao.ClassDAO;
 import com.classroom.dao.ResourceDAO;
 import com.classroom.dao.ResourceAssignmentDAO;
+import com.classroom.dao.UserDAO;
 import com.classroom.network.LecturerClient;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
+import java.util.List;
 
 public class LectureDashboard extends JFrame {
 
     private final JFrame parent;
     private final int lecturerId;
 
-    private JButton btnUpload, btnRemove, btnAssign, btnChooseFile;
-    private JTable tblResources;
+    private JButton btnUpload, btnRemove, btnAssign, btnChooseFile, btnSendAnnouncement, btnRefreshAnnouncements;
+    private JTable tblResources, tblAnnouncements;
     private JComboBox<String> cmbClass, cmbResource;
     private JTabbedPane tabs;
     private File selectedFile;
@@ -24,6 +26,7 @@ public class LectureDashboard extends JFrame {
     private final ClassDAO classDAO = new ClassDAO();
     private final ResourceDAO resourceDAO = new ResourceDAO();
     private final ResourceAssignmentDAO assignmentDAO = new ResourceAssignmentDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     public LectureDashboard(JFrame parent, int lecturerId) {
         this.parent = parent;
@@ -37,6 +40,7 @@ public class LectureDashboard extends JFrame {
         initUI();
         loadClasses();
         loadResources();
+        loadAnnouncements();
         initActions();
     }
 
@@ -74,9 +78,32 @@ public class LectureDashboard extends JFrame {
         tabs.addTab("Upload Resource", createUploadPanel());
         tabs.addTab("My Resources", createMyResourcesPanel());
         tabs.addTab("Assign to Class", createAssignPanel());
+        tabs.addTab("Announcements", createAnnouncementsPanel()); // New Tab
 
         add(header, BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
+    }
+
+    private JPanel createAnnouncementsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        tblAnnouncements = new JTable(new DefaultTableModel(new String[]{"ID", "Message", "Target", "Created At"}, 0));
+        JScrollPane scroll = new JScrollPane(tblAnnouncements);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        btnSendAnnouncement = new JButton("Send Announcement");
+        btnSendAnnouncement.setBackground(new Color(76, 175, 80));
+        btnSendAnnouncement.setForeground(Color.WHITE);
+        btnSendAnnouncement.setFocusPainted(false);
+
+        btnRefreshAnnouncements = new JButton("Refresh");
+        btnPanel.add(btnSendAnnouncement);
+        btnPanel.add(btnRefreshAnnouncements);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+
+        return panel;
     }
 
     private JPanel createUploadPanel() {
@@ -217,7 +244,6 @@ public class LectureDashboard extends JFrame {
 
             if (assignmentDAO.assignResourceToClass(resourceId, classId, lecturerId)) {
                 JOptionPane.showMessageDialog(this, "Resource assigned successfully!");
-
                 try {
                     File file = new File(resourceDAO.getFilePathById(resourceId));
                     LecturerClient.sendResourceToServer(file, String.valueOf(lecturerId), selectedClass);
@@ -230,6 +256,21 @@ public class LectureDashboard extends JFrame {
                 JOptionPane.showMessageDialog(this, "Failed to assign resource.");
             }
         });
+
+        // Announcements Actions
+        btnSendAnnouncement.addActionListener(e -> {
+            String message = JOptionPane.showInputDialog(this, "Enter announcement message for students:");
+            if (message == null || message.trim().isEmpty()) return;
+
+            if (userDAO.sendAnnouncement("LECTURER", String.valueOf(lecturerId), "STUDENTS", message)) {
+                JOptionPane.showMessageDialog(this, "Announcement sent successfully!");
+                loadAnnouncements();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to send announcement.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        btnRefreshAnnouncements.addActionListener(e -> loadAnnouncements());
     }
 
     private void loadClasses() {
@@ -248,11 +289,23 @@ public class LectureDashboard extends JFrame {
         });
     }
 
+    private void loadAnnouncements() {
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Message", "Target", "Created At"}, 0);
+        tblAnnouncements.setModel(model);
+
+        List<String[]> announcements = userDAO.getAllAnnouncementsByLecturer(lecturerId);
+        for (String[] a : announcements) {
+            model.addRow(a);
+        }
+    }
+
     // ------------ Getters used by controller ------------
     public JButton getBtnUpload() { return btnUpload; }
     public JButton getBtnRemove() { return btnRemove; }
     public JButton getBtnAssign() { return btnAssign; }
+    public JButton getBtnSendAnnouncement() { return btnSendAnnouncement; }
     public JTable getResourcesTable() { return tblResources; }
+    public JTable getAnnouncementTable() { return tblAnnouncements; }
     public JComboBox<String> getClassCombo() { return cmbClass; }
     public JComboBox<String> getResourceCombo() { return cmbResource; }
     public JTabbedPane getTabs() { return tabs; }
