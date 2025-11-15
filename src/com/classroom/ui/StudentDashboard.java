@@ -32,7 +32,7 @@ public class StudentDashboard extends JFrame {
         this.studentId = studentId;
         this.studentClass = studentClass;
 
-        setTitle("Student Dashboard - " + studentId);
+        setTitle("hello to Student  Dashboard - " + studentId);
         setSize(1000, 650);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
