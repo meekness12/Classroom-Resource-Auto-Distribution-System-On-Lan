@@ -17,11 +17,12 @@ public class StudentDashboard extends JFrame {
 
     private JTable tblResources;
     private JTable tblCached;
-    private JButton btnDownload, btnCache;
+    private JTable tblAnnouncements;
+    private JButton btnDownload, btnCache, btnRefreshAnnouncements;
     private JTabbedPane tabs;
 
     // Networking
-    private static final String SERVER_IP = "192.168.102.105"; 
+    private static final String SERVER_IP = "192.168.102.105";
     private static final int SERVER_PORT = 5000;
     private Socket socket;
     private DataInputStream in;
@@ -68,6 +69,7 @@ public class StudentDashboard extends JFrame {
         tabs.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         tabs.addTab("My Resources", createResourcesTab());
         tabs.addTab("Offline Cache", createCacheTab());
+        tabs.addTab("Announcements", createAnnouncementsTab()); // Added Announcements tab
 
         add(header, BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
@@ -153,6 +155,48 @@ public class StudentDashboard extends JFrame {
         JScrollPane scroll = new JScrollPane(tblCached);
         cachePanel.add(scroll, BorderLayout.CENTER);
         return cachePanel;
+    }
+
+    // === ANNOUNCEMENTS TAB ===
+    private JPanel createAnnouncementsTab() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        String[] columns = {"#", "Message", "Sender", "Date"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        tblAnnouncements = new JTable(model);
+        tblAnnouncements.setFillsViewportHeight(true);
+        tblAnnouncements.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tblAnnouncements.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tblAnnouncements.setRowHeight(28);
+
+        JScrollPane scroll = new JScrollPane(tblAnnouncements);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        btnRefreshAnnouncements = new JButton("Refresh");
+        btnRefreshAnnouncements.setBackground(new Color(33, 150, 243));
+        btnRefreshAnnouncements.setForeground(Color.WHITE);
+        btnRefreshAnnouncements.setFocusPainted(false);
+        btnRefreshAnnouncements.addActionListener(e -> loadAnnouncements());
+        btnPanel.add(btnRefreshAnnouncements);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+
+        // Initial load
+        loadAnnouncements();
+
+        return panel;
+    }
+
+    private void loadAnnouncements() {
+        DefaultTableModel model = (DefaultTableModel) tblAnnouncements.getModel();
+        model.setRowCount(0);
+
+        // Replace this with your real DAO or network call
+        // Example: announcementsDAO.getAnnouncementsForStudent(studentId);
+        // Dummy data for demonstration:
+        model.addRow(new Object[]{"1", "Welcome to the class!", "Admin", "2025-11-15"});
+        model.addRow(new Object[]{"2", "Project submission deadline approaching.", "Lecturer A", "2025-11-16"});
     }
 
     private void connectToServer() {
@@ -279,7 +323,6 @@ public class StudentDashboard extends JFrame {
         System.out.println("📦 Loaded " + (count - 1) + " cached files for " + studentClass);
     }
 
-    // ✅ Robust file opener for Windows, Mac, Linux
     private void openFile(String path) {
         try {
             File file = new File(path);
@@ -319,4 +362,6 @@ public class StudentDashboard extends JFrame {
     public JButton getBtnDownload() { return btnDownload; }
     public JButton getBtnCache() { return btnCache; }
     public JTabbedPane getTabs() { return tabs; }
+    public JTable getAnnouncementsTable() { return tblAnnouncements; }
+    public JButton getBtnRefreshAnnouncements() { return btnRefreshAnnouncements; }
 }
