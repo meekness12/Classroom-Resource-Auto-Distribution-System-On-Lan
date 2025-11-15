@@ -28,6 +28,10 @@ public class AdminDashboard extends JFrame {
     private DefaultTableModel classModel;
     private ClassDAO classDAO;
 
+    // Announcements tab
+    private JTable announcementTable;
+    private DefaultTableModel announcementModel;
+
     public AdminDashboard(MainDashboard parent, String username) {
         this.parent = parent;
         this.username = username;
@@ -42,6 +46,7 @@ public class AdminDashboard extends JFrame {
         initUI();
         loadUsers();
         loadClasses();
+        loadAnnouncements();
     }
 
     private void initUI() {
@@ -67,6 +72,7 @@ public class AdminDashboard extends JFrame {
         tabs = new JTabbedPane();
         tabs.addTab("Users", createUsersPanel());
         tabs.addTab("Classes", createClassesPanel());
+        tabs.addTab("Announcements", createAnnouncementsPanel());
         tabs.addTab("Resources", new JPanel());
         tabs.addTab("Backups", new JPanel());
 
@@ -79,9 +85,7 @@ public class AdminDashboard extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         userModel = new DefaultTableModel(new String[]{"ID", "Username", "Full Name", "Role"}, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
 
         userTable = new JTable(userModel) {
@@ -314,7 +318,6 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // ================= ENROLL STUDENTS =================
     private void enrollStudents() {
         int row = classTable.getSelectedRow();
         if (row == -1) {
@@ -348,20 +351,60 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // ================= GETTERS FOR CONTROLLER =================
-    public JButton getBtnLogout() {
-        return btnLogout;
+    // ================= ANNOUNCEMENTS TAB =================
+    private JPanel createAnnouncementsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        announcementModel = new DefaultTableModel(new String[]{"ID", "Target", "Message", "Created At"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        announcementTable = new JTable(announcementModel);
+        JScrollPane scrollPane = new JScrollPane(announcementTable);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel();
+        JButton btnSend = new JButton("Send Announcement");
+        JButton btnRefresh = new JButton("Refresh");
+        btnPanel.add(btnSend);
+        btnPanel.add(btnRefresh);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+
+        btnSend.addActionListener(e -> sendAnnouncement());
+        btnRefresh.addActionListener(e -> loadAnnouncements());
+
+        return panel;
     }
 
-    public JTabbedPane getTabs() {
-        return tabs;
+    private void sendAnnouncement() {
+        String[] options = {"STUDENTS", "LECTURERS", "ALL"};
+        String target = (String) JOptionPane.showInputDialog(this, "Select target audience:",
+                "Send Announcement", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        if (target == null) return;
+
+        String message = JOptionPane.showInputDialog(this, "Enter your announcement message:");
+        if (message == null || message.trim().isEmpty()) return;
+
+        // Save to DB
+        if (userDAO.sendAnnouncement("ADMIN", username, target, message)) {
+            JOptionPane.showMessageDialog(this, "Announcement sent successfully!");
+            loadAnnouncements();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to send announcement.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    public JTable getUserTable() {
-        return userTable;
+    private void loadAnnouncements() {
+        announcementModel.setRowCount(0);
+        List<String[]> announcements = userDAO.getAllAnnouncements(); // {id, target, message, created_at}
+        for (String[] a : announcements) {
+            announcementModel.addRow(a);
+        }
     }
 
-    public JTable getClassTable() {
-        return classTable;
-    }
+    // ================= GETTERS =================
+    public JButton getBtnLogout() { return btnLogout; }
+    public JTabbedPane getTabs() { return tabs; }
+    public JTable getUserTable() { return userTable; }
+    public JTable getClassTable() { return classTable; }
+    public JTable getAnnouncementTable() { return announcementTable; }
 }
