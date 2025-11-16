@@ -3,10 +3,13 @@ package com.classroom.ui;
 import com.classroom.dao.UserDAO;
 import com.classroom.dao.ClassDAO;
 import com.classroom.dao.StudentClassDAO;
+import com.classroom.dao.BackupLogDAO;
+import com.classroom.util.BackupUtility;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
 
 public class AdminDashboard extends JFrame {
@@ -73,8 +76,7 @@ public class AdminDashboard extends JFrame {
         tabs.addTab("Users", createUsersPanel());
         tabs.addTab("Classes", createClassesPanel());
         tabs.addTab("Announcements", createAnnouncementsPanel());
-        tabs.addTab("Resources", new JPanel());
-        tabs.addTab("Backups", new JPanel());
+        tabs.addTab("Backups", createBackupPanel()); // Added backup panel
 
         add(header, BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
@@ -93,11 +95,7 @@ public class AdminDashboard extends JFrame {
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
                 String uname = (String) getValueAt(row, 1);
-                if (DEFAULT_ADMIN_USERNAME.equals(uname)) {
-                    c.setBackground(new Color(255, 230, 230));
-                } else {
-                    c.setBackground(Color.WHITE);
-                }
+                c.setBackground(DEFAULT_ADMIN_USERNAME.equals(uname) ? new Color(255, 230, 230) : Color.WHITE);
                 return c;
             }
         };
@@ -284,10 +282,8 @@ public class AdminDashboard extends JFrame {
 
     private void editClass() {
         int row = classTable.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Select a class to edit.", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        if (row == -1) return;
+
         String id = (String) classTable.getValueAt(row, 0);
         String name = (String) classTable.getValueAt(row, 1);
         String newName = JOptionPane.showInputDialog(this, "Edit class name:", name);
@@ -303,10 +299,8 @@ public class AdminDashboard extends JFrame {
 
     private void deleteClass() {
         int row = classTable.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Select a class to delete.", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        if (row == -1) return;
+
         String id = (String) classTable.getValueAt(row, 0);
         if (JOptionPane.showConfirmDialog(this, "Delete class: " + classTable.getValueAt(row,1) + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             if (classDAO.deleteClass(Integer.parseInt(id))) {
@@ -320,10 +314,7 @@ public class AdminDashboard extends JFrame {
 
     private void enrollStudents() {
         int row = classTable.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Select a class to enroll students.", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        if (row == -1) return;
 
         String classId = (String) classTable.getValueAt(row, 0);
         String className = (String) classTable.getValueAt(row, 1);
@@ -384,8 +375,8 @@ public class AdminDashboard extends JFrame {
         String message = JOptionPane.showInputDialog(this, "Enter your announcement message:");
         if (message == null || message.trim().isEmpty()) return;
 
-        // Save to DB
-        if (userDAO.sendAnnouncement("ADMIN", username, target, message)) {
+        int adminId = userDAO.getLecturerIdByUsername(username); // or getUserId
+        if (userDAO.sendAnnouncement("ADMIN", String.valueOf(adminId), target, message)) {
             JOptionPane.showMessageDialog(this, "Announcement sent successfully!");
             loadAnnouncements();
         } else {
@@ -395,11 +386,63 @@ public class AdminDashboard extends JFrame {
 
     private void loadAnnouncements() {
         announcementModel.setRowCount(0);
-        List<String[]> announcements = userDAO.getAllAnnouncements(); // {id, target, message, created_at}
+        List<String[]> announcements = userDAO.getAllAnnouncements();
         for (String[] a : announcements) {
             announcementModel.addRow(a);
         }
     }
+
+    // ================= BACKUP TAB =================
+    private JPanel createBackupPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel btnPanel = new JPanel();
+        JButton btnBackupNow = new JButton("Backup Now");
+        JButton btnSchedule = new JButton("Schedule Backup"); // Optional for later
+        btnPanel.add(btnBackupNow);
+        btnPanel.add(btnSchedule);
+        panel.add(btnPanel, BorderLayout.CENTER);
+
+        btnBackupNow.addActionListener(e -> performBackup());
+
+        return panel;
+    }
+
+    private void performBackup() {
+    String backupDir = "C:\\ClassroomBackups";
+    File backupFolder = new File(backupDir);
+    if (!backupFolder.exists()) {
+        backupFolder.mkdirs(); // create backup folder if missing
+    }
+
+    String dbBackup = null;
+    try {
+        dbBackup = BackupUtility.backupDatabase("your_db_name", "root", "password", backupDir);
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+                "Database backup failed! Check if 'mysqldump' is installed and in PATH.",
+                "Backup Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    String fileBackup = BackupUtility.backupFiles("C:\\ClassroomFiles", backupDir);
+
+    BackupLogDAO logDAO = new BackupLogDAO();
+    String backupFiles = (dbBackup != null ? dbBackup : "") + ";" + (fileBackup != null ? fileBackup : "");
+    String status = (dbBackup != null && fileBackup != null) ? "SUCCESS" : "FAILED";
+
+    try {
+        logDAO.insertLog(username, "FULL", backupFiles, status);
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Failed to log backup record.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    JOptionPane.showMessageDialog(this,
+            "Backup " + status + "!\nFiles: " + backupFiles,
+            "Backup Result", JOptionPane.INFORMATION_MESSAGE);
+}
+
 
     // ================= GETTERS =================
     public JButton getBtnLogout() { return btnLogout; }
