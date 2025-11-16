@@ -195,4 +195,21 @@ public class UserDAO {
         }
         return null;
     }
+    // USE AnnouncementDAO INTERNALLY
+AnnouncementDAO announcementDAO = new AnnouncementDAO();
+
+public boolean sendAnnouncement(String senderRole, String senderId, String target, String message) {
+    return announcementDAO.sendAnnouncement(senderRole, senderId, target, message);
+}
+
+public List<String[]> getAllAnnouncementsByLecturer(int lecturerId) {
+    return announcementDAO.getAnnouncementsByLecturer(lecturerId);
+}
+// In UserDAO.java
+public List<String[]> getAllAnnouncements() {
+    return announcementDAO.getAllAnnouncements(); // Make sure AnnouncementDAO has this method
+}
+
+
+
 }
