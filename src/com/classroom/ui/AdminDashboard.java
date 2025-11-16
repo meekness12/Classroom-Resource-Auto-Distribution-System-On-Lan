@@ -73,7 +73,6 @@ public class AdminDashboard extends JFrame {
         tabs.addTab("Users", createUsersPanel());
         tabs.addTab("Classes", createClassesPanel());
         tabs.addTab("Announcements", createAnnouncementsPanel());
-        tabs.addTab("Resources", new JPanel());
         tabs.addTab("Backups", new JPanel());
 
         add(header, BorderLayout.NORTH);
@@ -384,8 +383,8 @@ public class AdminDashboard extends JFrame {
         String message = JOptionPane.showInputDialog(this, "Enter your announcement message:");
         if (message == null || message.trim().isEmpty()) return;
 
-        // Save to DB
-        if (userDAO.sendAnnouncement("ADMIN", username, target, message)) {
+        int adminId = userDAO.getLecturerIdByUsername(username); // or getUserId
+        if (userDAO.sendAnnouncement("ADMIN", String.valueOf(adminId), target, message)) {
             JOptionPane.showMessageDialog(this, "Announcement sent successfully!");
             loadAnnouncements();
         } else {
@@ -395,7 +394,7 @@ public class AdminDashboard extends JFrame {
 
     private void loadAnnouncements() {
         announcementModel.setRowCount(0);
-        List<String[]> announcements = userDAO.getAllAnnouncements(); // {id, target, message, created_at}
+        List<String[]> announcements = userDAO.getAllAnnouncements();
         for (String[] a : announcements) {
             announcementModel.addRow(a);
         }
