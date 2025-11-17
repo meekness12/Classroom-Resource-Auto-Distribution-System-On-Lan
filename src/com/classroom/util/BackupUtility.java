@@ -18,7 +18,7 @@ public class BackupUtility {
         String backupFile = backupDir + File.separator + dbName + "_backup_" + timestamp + ".sql";
 
         try (Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/" + dbName + "?useSSL=false", dbUser, dbPass);
+                "jdbc:mysql://192.168.102.105:3306/" + dbName + "?useSSL=false", dbUser, dbPass);
              PrintWriter pw = new PrintWriter(new FileWriter(backupFile))) {
 
             try (Statement stmtTables = conn.createStatement();
