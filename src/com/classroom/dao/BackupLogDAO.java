@@ -14,20 +14,21 @@ public class BackupLogDAO {
      * @param files Files/DB path saved
      * @param status SUCCESS or FAILED
      */
-    public void insertLog(String username, String type, String files, String status) {
-        String sql = "INSERT INTO backup_logs (performed_by, backup_type, files, status) VALUES (?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, username);
-            ps.setString(2, type);
-            ps.setString(3, files);
-            ps.setString(4, status);
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public void insertLog(int performedBy, String type, String files, String status) {
+    String sql = "INSERT INTO backup_logs (performed_by, backup_type, files, status) VALUES (?, ?, ?, ?)";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, performedBy);
+        ps.setString(2, type);
+        ps.setString(3, files);
+        ps.setString(4, status.trim()); // exact enum value
+        ps.executeUpdate();
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+}
+
+
+
+
 }
