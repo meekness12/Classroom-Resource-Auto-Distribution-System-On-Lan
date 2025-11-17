@@ -5,6 +5,9 @@ import com.classroom.dao.ClassDAO;
 import com.classroom.dao.StudentClassDAO;
 import com.classroom.dao.BackupLogDAO;
 import com.classroom.util.BackupUtility;
+import com.classroom.util.GoogleDriveBackup;
+import com.google.api.services.drive.Drive;
+import com.classroom.util.ZipUtility;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -407,32 +410,38 @@ public class AdminDashboard extends JFrame {
 
         return panel;
     }
-
-    private void performBackup() {
+private void performBackup() {
     String backupDir = "C:\\ClassroomBackups";
     File backupFolder = new File(backupDir);
-    if (!backupFolder.exists()) {
-        backupFolder.mkdirs(); // create backup folder if missing
-    }
+    if (!backupFolder.exists()) backupFolder.mkdirs();
 
-    String dbBackup = null;
-    try {
-        dbBackup = BackupUtility.backupDatabase("your_db_name", "root", "password", backupDir);
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this,
-                "Database backup failed! Check if 'mysqldump' is installed and in PATH.",
-                "Backup Error", JOptionPane.ERROR_MESSAGE);
-    }
-
+    String dbBackup = BackupUtility.backupDatabase("classroom_db", "root", "", backupDir);
     String fileBackup = BackupUtility.backupFiles("C:\\ClassroomFiles", backupDir);
 
-    BackupLogDAO logDAO = new BackupLogDAO();
     String backupFiles = (dbBackup != null ? dbBackup : "") + ";" + (fileBackup != null ? fileBackup : "");
-    String status = (dbBackup != null && fileBackup != null) ? "SUCCESS" : "FAILED";
+    String status = (dbBackup != null && !dbBackup.isEmpty() && fileBackup != null && !fileBackup.isEmpty()) ? "SUCCESS" : "FAIL";
 
+    // Google Drive upload
     try {
-        logDAO.insertLog(username, "FULL", backupFiles, status);
+        Drive driveService = GoogleDriveBackup.getDriveService();
+        String folderId = GoogleDriveBackup.getOrCreateFolder(driveService, "ClassroomBackups");
+
+        if (dbBackup != null) {
+            GoogleDriveBackup.uploadFileToFolder(dbBackup, new File(dbBackup).getName(), folderId);
+        }
+        if (fileBackup != null) {
+            GoogleDriveBackup.uploadFileToFolder(fileBackup, new File(fileBackup).getName(), folderId);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Google Drive upload failed.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    // Log backup
+    try {
+        BackupLogDAO logDAO = new BackupLogDAO();
+        int userId = userDAO.getUserIdByUsername(username);
+        logDAO.insertLog(userId, "FULL", backupFiles, status);
     } catch (Exception e) {
         e.printStackTrace();
         JOptionPane.showMessageDialog(this, "Failed to log backup record.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -442,6 +451,7 @@ public class AdminDashboard extends JFrame {
             "Backup " + status + "!\nFiles: " + backupFiles,
             "Backup Result", JOptionPane.INFORMATION_MESSAGE);
 }
+
 
 
     // ================= GETTERS =================
