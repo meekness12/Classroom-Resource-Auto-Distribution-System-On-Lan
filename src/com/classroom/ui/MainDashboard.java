@@ -16,21 +16,15 @@ public class MainDashboard extends JFrame {
 
     public MainDashboard() {
         setTitle("Classroom Resource Distribution System");
-        setSize(500, 500);
+        setSize(600, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Detect active LAN automatically
         detectLAN();
-
-        // Initialize the main dashboard UI
         initUI();
     }
 
-    /**
-     * Auto-detect active LAN and allow user to confirm/change.
-     */
     private void detectLAN() {
         String detectedLAN = null;
         try {
@@ -48,10 +42,9 @@ public class MainDashboard extends JFrame {
                 }
             }
 
-            // Show input dialog with detected LAN prefilled
             String input = (String) JOptionPane.showInputDialog(
                     null,
-                    "Confirm or select the LAN you are connected to:",
+                    "Confirm or select your LAN:",
                     "LAN Selection",
                     JOptionPane.QUESTION_MESSAGE,
                     null,
@@ -67,7 +60,6 @@ public class MainDashboard extends JFrame {
             selectedLAN = input;
 
         } catch (Exception e) {
-            // Fallback: manual input if detection fails
             selectedLAN = JOptionPane.showInputDialog("Enter LAN IP manually:");
             if (selectedLAN == null || selectedLAN.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "LAN selection required. Exiting.");
@@ -77,53 +69,55 @@ public class MainDashboard extends JFrame {
     }
 
     private void initUI() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(245, 245, 245));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 15, 15, 15);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(new Color(245, 245, 245));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
         // Title
-        JLabel lblTitle = new JLabel("Classroom Resource System");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("Classroom Resource System", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblTitle.setForeground(new Color(33, 37, 41));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        panel.add(lblTitle, gbc);
+        mainPanel.add(lblTitle);
+        mainPanel.add(Box.createVerticalStrut(20));
 
-        // LAN info
+        // LAN Info
         JLabel lblLAN = new JLabel("Connected LAN: " + selectedLAN, SwingConstants.CENTER);
-        lblLAN.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblLAN.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblLAN.setForeground(new Color(55, 71, 79));
-        gbc.gridy++;
-        panel.add(lblLAN, gbc);
+        lblLAN.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(lblLAN);
+        mainPanel.add(Box.createVerticalStrut(20));
 
         // Welcome message
-        JLabel lblWelcome = new JLabel("<html><center>Hey, welcome to our Classroom Auto Distribution!<br>"
-                + "Please choose your role to continue.</center></html>", SwingConstants.CENTER);
-        lblWelcome.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        JLabel lblWelcome = new JLabel(
+                "<html><center>Welcome to Classroom Auto Distribution!<br>Choose your role to continue.</center></html>",
+                SwingConstants.CENTER
+        );
+        lblWelcome.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         lblWelcome.setForeground(new Color(55, 71, 79));
-        gbc.gridy++;
-        panel.add(lblWelcome, gbc);
+        lblWelcome.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(lblWelcome);
+        mainPanel.add(Box.createVerticalStrut(40));
 
-        // Buttons with modern look
+        // Role buttons
+        JPanel btnPanel = new JPanel();
+        btnPanel.setOpaque(false);
+        btnPanel.setLayout(new GridLayout(3, 1, 0, 15));
+
         JButton btnAdmin = createStyledButton("Admin", new Color(33, 150, 243));
         JButton btnLecture = createStyledButton("Lecture", new Color(0, 123, 255));
         JButton btnStudent = createStyledButton("Student", new Color(40, 167, 69));
 
-        gbc.gridwidth = 1;
-        gbc.gridy++;
-        panel.add(btnAdmin, gbc);
-        gbc.gridy++;
-        panel.add(btnLecture, gbc);
-        gbc.gridy++;
-        panel.add(btnStudent, gbc);
+        btnPanel.add(btnAdmin);
+        btnPanel.add(btnLecture);
+        btnPanel.add(btnStudent);
 
-        add(panel);
+        mainPanel.add(btnPanel);
+        add(mainPanel);
 
-        // Action Listeners
+        // Button actions
         btnAdmin.addActionListener(e -> {
             this.setVisible(false);
             new AdminLogin(this).setVisible(true);
@@ -143,17 +137,16 @@ public class MainDashboard extends JFrame {
     private JButton createStyledButton(String text, Color color) {
         JButton button = new JButton(text);
         button.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        button.setBackground(color);
         button.setForeground(Color.WHITE);
+        button.setBackground(color);
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
                 button.setBackground(color.darker());
             }
-
             @Override
             public void mouseExited(MouseEvent e) {
                 button.setBackground(color);

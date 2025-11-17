@@ -2,12 +2,19 @@ package com.classroom.ui;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import com.classroom.dao.AnnouncementDAO;
+import com.classroom.model.Announcement;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.Socket;
 import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
+
 
 public class StudentDashboard extends JFrame {
 
@@ -189,15 +196,23 @@ public class StudentDashboard extends JFrame {
     }
 
     private void loadAnnouncements() {
-        DefaultTableModel model = (DefaultTableModel) tblAnnouncements.getModel();
-        model.setRowCount(0);
+    DefaultTableModel model = (DefaultTableModel) tblAnnouncements.getModel();
+    model.setRowCount(0);
 
-        // Replace this with your real DAO or network call
-        // Example: announcementsDAO.getAnnouncementsForStudent(studentId);
-        // Dummy data for demonstration:
-        model.addRow(new Object[]{"1", "Welcome to the class!", "Admin", "2025-11-15"});
-        model.addRow(new Object[]{"2", "Project submission deadline approaching.", "Lecturer A", "2025-11-16"});
+    AnnouncementDAO dao = new AnnouncementDAO();
+    List<Announcement> announcements = dao.getAnnouncementsForStudent();
+
+    int count = 1;
+    for (Announcement a : announcements) {
+        model.addRow(new Object[]{
+            count++,
+            a.getMessage(),
+            a.getSenderRole(),
+            a.getCreatedAt().toString()
+        });
     }
+}
+
 
     private void connectToServer() {
         try {

@@ -208,6 +208,19 @@ public class UserDAO {
     }
     return -1;
 }
+public String getUsernameById(int userId) {
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement("SELECT username FROM users WHERE user_id = ?")) {
+        ps.setInt(1, userId);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getString("username");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+
 
     // USE AnnouncementDAO INTERNALLY
 AnnouncementDAO announcementDAO = new AnnouncementDAO();
