@@ -11,6 +11,7 @@ credentials.json
 /.IDEA
 /backups
 credentials.json
+credentials.json
 ### Eclipse ###
 .apt_generated
 .classpath
