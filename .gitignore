@@ -10,6 +10,7 @@ credentials.json
 /tokens
 /.IDEA
 /backups
+credentials.json
 ### Eclipse ###
 .apt_generated
 .classpath
