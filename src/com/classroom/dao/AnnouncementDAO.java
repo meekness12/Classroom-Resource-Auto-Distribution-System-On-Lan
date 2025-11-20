@@ -1,5 +1,6 @@
 package com.classroom.dao;
 
+import com.classroom.model.Announcement;
 import com.classroom.util.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
@@ -83,30 +84,28 @@ public class AnnouncementDAO {
     }
 
     // FETCH FOR STUDENTS (ONLY TARGETED TO STUDENTS)
-    public List<String[]> getAnnouncementsForStudents() {
-        List<String[]> list = new ArrayList<>();
-
-        String sql = """
-            SELECT announcement_id, message, sender_role, created_at
-            FROM announcements
-            WHERE target IN ('STUDENTS','ALL')
-            ORDER BY created_at DESC
-        """;
+    public List<Announcement> getAnnouncementsForStudent() {
+        List<Announcement> list = new ArrayList<>();
+        String sql = "SELECT * FROM announcements " +
+                     "WHERE target = 'ALL' OR target = 'STUDENTS' " +
+                     "ORDER BY created_at DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                list.add(new String[]{
-                        rs.getString("announcement_id"),
-                        rs.getString("message"),
+                list.add(new Announcement(
+                        rs.getInt("announcement_id"),
                         rs.getString("sender_role"),
-                        rs.getString("created_at")
-                });
+                        rs.getString("sender_id"),
+                        rs.getString("target"),
+                        rs.getString("message"),
+                        rs.getTimestamp("created_at")
+                ));
             }
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 

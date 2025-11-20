@@ -5,7 +5,11 @@ out/
 /received_files
 /server_files
 /cache_files
-
+credentials.json
+/temp-jar
+/tokens
+/.IDEA
+/backups
 ### Eclipse ###
 .apt_generated
 .classpath
