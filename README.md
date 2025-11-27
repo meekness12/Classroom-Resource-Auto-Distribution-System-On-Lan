@@ -107,15 +107,11 @@ Relationships support:
 
 ## 📸 Screenshots
 
-> *(Add your system screenshots in `screenshots/` and I will embed them here.)*
+<img width="1331" height="865" alt="admindashbaord" src="https://github.com/user-attachments/assets/ef2ae766-54c9-4406-b987-6ab98b45a6db" />
+<img width="1230" height="796" alt="lecturedashboard" src="https://github.com/user-attachments/assets/c3ed9f3f-8f6c-4443-ae75-166f06ccaec0" />
+<img width="1231" height="793" alt="student dashbaord" src="https://github.com/user-attachments/assets/9e10f85c-4ca0-4d8d-877c-a0c59e49ca26" />
 
-Example placeholders:
 
-* Login screen
-* Admin dashboard
-* Lecturer resource upload
-* Student dashboard
-* Backup manager
 
 ---
 
